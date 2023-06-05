@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>Challenge</title>
+
+		<style>
+			*{
+				padding: 0px;
+				margin: 0px;
+			}
+
+			body {
+				background-color: #f0f0f0;
+			}
+
+			p, h4, h1{
+				margin: 20px;
+				font-family: Georgia, 'Times New Roman', Times, serif;
+			}
+			
+			header {
+				padding: 20px;
+				background-color:forestgreen;
+				color: #fff;
+				text-align: center;
+			}
+
+			#contBotones {
+				height:448px;
+				width:80%;
+				margin:auto;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				margin-top: 20px;
+			}
+
+			#contBotones p{
+				margin: 8px;
+			}
+
+			button{
+				background-color: forestgreen;
+  				color: #fff;
+				border-radius: 4px;
+				border:none;
+				cursor: pointer;
+			}
+
+			button:hover {
+				background-color: #2fc62f;
+			}
+
+			#contBotones button {
+				padding: 25px 30px;
+				margin: 0 10px;
+				font-size: 16px;
+			}
+
+			#contSaldo button {
+				padding: 12px 30px;
+				margin: 0 10px;
+				font-size: 16px;
+			}
+			
+			#contSaldo{
+				text-align: center;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="contenedor">
+			<header> <h1>Challenge</h1> </header>
+			<div id="contSaldo"></div>	
+			<div id="contBotones">
+			</div>
+		</div>
+		
+		<script>
+			const jsonCuentas =`[
+								{"e":"1","n":"872378326701","t":"02","saldo":"1500","moneda":"u$s","tipo_letras":"CC"},
+								{"e":"1","n":"872378326702","t":"01","saldo":"-600","moneda":"$","tipo_letras":"CC"},
+								{"e":"1","n":"872378326703","t":"01","saldo":"745","moneda":"$","tipo_letras":"CC"},
+								{"e":"1","n":"872378326704","t":"01","saldo":"852.36","moneda":"$uy","tipo_letras":"CA"},
+								{"e":"1","n":"872378326705","t":"01","saldo":"569","moneda":"$","tipo_letras":"CC"},
+								{"e":"1","n":"872378326706","t":"01","saldo":"250","moneda":"$","tipo_letras":"CA"},
+								{"e":"1","n":"872378326707","t":"01","saldo":"25000","moneda":"$uy","tipo_letras":"CC"},
+								{"e":"1","n":"872378326708","t":"01","saldo":"659","moneda":"u$s","tipo_letras":"CCP"},
+								{"e":"1","n":"872378326709","t":"01","saldo":"458","moneda":"$","tipo_letras":"CC"},
+								{"e":"1","n":"872378326710","t":"01","saldo":"700","moneda":"bs","tipo_letras":"CC"},
+								{"e":"1","n":" ","t":"01","saldo":"6458925","moneda":"$","tipo_letras":"CC"},
+								{"e":"1","n":"872378327823","t":"11","saldo":"250","moneda":"$","tipo_letras":"CA"},
+								{"e":"1","n":"872378327823","t":"12","saldo":"45","moneda":"u$s","tipo_letras":"CA"}
+							]`
+			
+			const objetoCuentas = JSON.parse(jsonCuentas);
+			const cuentas = objetoCuentas.filter(
+				(cuenta) => cuenta.tipo_letras == "CC" | cuenta.tipo_letras == "CA" && 
+				cuenta.moneda == "u$s" | cuenta.moneda == "$"
+			);
+
+			var botonesContainer = document.getElementById('contBotones');
+			var saldoContainer = document.getElementById('contSaldo');
+			var maxBotones = 5;
+			var pagActual = 0;
+			var totalPag = Math.ceil(cuentas.length / maxBotones);
+
+			function botonesDinamicos(pagina) {
+				botonesContainer.innerHTML = '';
+
+				var inicio = pagina * maxBotones;
+				var fin = inicio + maxBotones;
+				var botones = cuentas.slice(inicio, fin);
+				var tipoC;
+
+				botones.forEach(function(cuenta) {
+					if(cuenta.tipo_letras == 'CC')
+					{
+						tipoC = 'Cuenta Corriente';
+					}
+					else
+					{
+						tipoC = 'Caja de Ahorro';
+					}
+
+					var boton = document.createElement('button');
+					boton.innerHTML = tipoC;
+					boton.insertAdjacentHTML('beforeend', '<p>'+cuenta.n+'</p>');
+					boton.addEventListener('click', function() {
+						infoCuenta(cuenta.saldo, cuenta.moneda, cuenta.tipo_letras, cuenta.n);
+					});
+					botonesContainer.appendChild(boton);
+				});
+
+				updateSigAnt();
+			}
+
+			function updateSigAnt() {
+				var btnSig;
+				var btnAnt;
+
+				if (pagActual == 0)
+				{
+					if (btnAnt) 
+					{
+						btnAnt.style.display = 'none';
+					}
+				} 
+				else 
+				{
+					if (btnAnt) 
+					{
+						btnAnt.style.display = 'inline-block';
+					} 
+					else
+					{
+						btnAnt = document.createElement('button');
+						btnAnt.innerHTML = 'Anterior';
+						btnAnt.id = 'btn-anterior';
+						btnAnt.addEventListener('click', pagAnt);
+						botonesContainer.insertBefore(btnAnt, botonesContainer.firstChild);
+					}
+				}
+
+				if (pagActual >= totalPag - 1)
+				{
+					if (btnSig)
+					{
+						btnSig.style.display = 'none';
+					}
+				}
+				else
+				{
+					if (btnSig)
+					{
+						btnSig.style.display = 'inline-block';
+					}
+					else
+					{
+						btnSig = document.createElement('button');
+						btnSig.innerHTML = 'Siguiente';
+						btnSig.id = 'btn-siguiente';
+						btnSig.addEventListener('click', pagSig);
+						botonesContainer.appendChild(btnSig);
+					}
+				}
+			}
+
+			function infoCuenta(saldo, moneda, tipoCuenta, numero) {
+				var tipo;
+
+				if(tipoCuenta == 'CC')
+				{
+					tipo = 'Cuenta Corriente';
+				}
+				else
+				{
+					tipo = 'Caja de Ahorro';
+				}
+
+				botonesContainer.remove();
+				saldoContainer.innerHTML = "<h4>Consulta de saldo</h4>";
+				saldoContainer.insertAdjacentHTML('beforeend', '<h1>Este es tu saldo actual</h1>');
+				saldoContainer.insertAdjacentHTML('beforeend','<p>Saldo de la cuenta: '+moneda+ +saldo+'</p>');
+				saldoContainer.insertAdjacentHTML('beforeend', '<p>Tipo de cuenta: '+tipo+'</p>');
+				saldoContainer.insertAdjacentHTML('beforeend', '<p>Numero de cuenta: '+numero+'</p>');
+				saldoContainer.insertAdjacentHTML('beforeend', '<button onclick="reset()">Volver</button>');
+			}
+
+			function pagSig() {
+				pagActual++;
+				botonesDinamicos(pagActual);
+			}
+
+			function pagAnt() {
+				pagActual--;
+				botonesDinamicos(pagActual);
+			}
+
+			function reset() {
+  				window.location.href = window.location.href;
+			}
+
+			botonesDinamicos(pagActual);
+
+		</script>
+	</body>
+
+</html>
